@@ -1,0 +1,4 @@
+[submodule "testdata/etcd"]
+	path = testdata/etcd
+	url = https://github.com/wylswz/etcd
+    
