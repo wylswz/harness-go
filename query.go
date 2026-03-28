@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/wylswz/harness-go/internal/analysis"
+	"github.com/wylswz/harness-go/pkg/object"
+	"github.com/wylswz/harness-go/pkg/rule"
 )
 
 // ---------------------------------------------------------------------------
@@ -28,7 +30,7 @@ func (q *PackageQuery) clone() *PackageQuery {
 
 func (q *PackageQuery) WithPrefix(prefix string) *PackageQuery {
 	nq := q.clone()
-	nq.conditions = append(nq.conditions, func(p *PackageObj) bool {
+	nq.conditions = append(nq.conditions, func(p *object.PackageObj) bool {
 		return strings.HasPrefix(p.PkgPath(), prefix)
 	})
 	return nq
@@ -36,30 +38,30 @@ func (q *PackageQuery) WithPrefix(prefix string) *PackageQuery {
 
 func (q *PackageQuery) WithName(name string) *PackageQuery {
 	nq := q.clone()
-	nq.conditions = append(nq.conditions, func(p *PackageObj) bool {
+	nq.conditions = append(nq.conditions, func(p *object.PackageObj) bool {
 		return p.Name() == name
 	})
 	return nq
 }
 
-func (q *PackageQuery) Matching(cond Condition[*PackageObj]) *PackageQuery {
+func (q *PackageQuery) Matching(cond Condition[*object.PackageObj]) *PackageQuery {
 	nq := q.clone()
 	nq.conditions = append(nq.conditions, cond)
 	return nq
 }
 
-func (q *PackageQuery) Select() *Selector[*PackageObj] {
+func (q *PackageQuery) Select() *Selector[*object.PackageObj] {
 	conds := q.conditions
-	return newSelector(func(ctx *Context) []*PackageObj {
+	return newSelector(func(ctx *Context) []*object.PackageObj {
 		return resolvePackages(ctx, conds)
 	})
 }
 
-func (q *PackageQuery) MustNotImport(sel *Selector[*PackageObj]) Rule {
+func (q *PackageQuery) MustNotImport(sel *Selector[*object.PackageObj]) Rule {
 	return &packageImportRule{source: q, forbidden: sel}
 }
 
-func (q *PackageQuery) MustOnlyImport(sel *Selector[*PackageObj]) Rule {
+func (q *PackageQuery) MustOnlyImport(sel *Selector[*object.PackageObj]) Rule {
 	return &packageAllowlistRule{source: q, allowed: sel}
 }
 
@@ -69,8 +71,8 @@ func (q *PackageQuery) MustOnlyImport(sel *Selector[*PackageObj]) Rule {
 
 // FuncQuery builds a filtered view of functions and methods.
 type FuncQuery struct {
-	conditions []Condition[*FuncObj]
-	residesIn  *Selector[*PackageObj]
+	conditions []Condition[*object.FuncObj]
+	residesIn  *Selector[*object.PackageObj]
 }
 
 func Functions() *FuncQuery {
@@ -79,14 +81,14 @@ func Functions() *FuncQuery {
 
 func (q *FuncQuery) clone() *FuncQuery {
 	out := &FuncQuery{
-		conditions: make([]Condition[*FuncObj], len(q.conditions)),
+		conditions: make([]Condition[*object.FuncObj], len(q.conditions)),
 		residesIn:  q.residesIn,
 	}
 	copy(out.conditions, q.conditions)
 	return out
 }
 
-func (q *FuncQuery) ResidesIn(sel *Selector[*PackageObj]) *FuncQuery {
+func (q *FuncQuery) ResidesIn(sel *Selector[*object.PackageObj]) *FuncQuery {
 	nq := q.clone()
 	nq.residesIn = sel
 	return nq
@@ -94,7 +96,7 @@ func (q *FuncQuery) ResidesIn(sel *Selector[*PackageObj]) *FuncQuery {
 
 func (q *FuncQuery) WithName(name string) *FuncQuery {
 	nq := q.clone()
-	nq.conditions = append(nq.conditions, func(f *FuncObj) bool {
+	nq.conditions = append(nq.conditions, func(f *object.FuncObj) bool {
 		return f.Name() == name
 	})
 	return nq
@@ -102,27 +104,27 @@ func (q *FuncQuery) WithName(name string) *FuncQuery {
 
 func (q *FuncQuery) Exported() *FuncQuery {
 	nq := q.clone()
-	nq.conditions = append(nq.conditions, func(f *FuncObj) bool {
+	nq.conditions = append(nq.conditions, func(f *object.FuncObj) bool {
 		return f.IsExported()
 	})
 	return nq
 }
 
-func (q *FuncQuery) Matching(cond Condition[*FuncObj]) *FuncQuery {
+func (q *FuncQuery) Matching(cond Condition[*object.FuncObj]) *FuncQuery {
 	nq := q.clone()
 	nq.conditions = append(nq.conditions, cond)
 	return nq
 }
 
-func (q *FuncQuery) Select() *Selector[*FuncObj] {
+func (q *FuncQuery) Select() *Selector[*object.FuncObj] {
 	conds := q.conditions
 	pkgs := q.residesIn
-	return newSelector(func(ctx *Context) []*FuncObj {
+	return newSelector(func(ctx *Context) []*object.FuncObj {
 		return resolveFuncs(ctx, pkgs, conds)
 	})
 }
 
-func (q *FuncQuery) MustNotCall(sel *Selector[*FuncObj]) Rule {
+func (q *FuncQuery) MustNotCall(sel *Selector[*object.FuncObj]) Rule {
 	return &funcCallRule{source: q, forbidden: sel}
 }
 
@@ -132,8 +134,8 @@ func (q *FuncQuery) MustNotCall(sel *Selector[*FuncObj]) Rule {
 
 // StructQuery builds a filtered view of struct types.
 type StructQuery struct {
-	conditions []Condition[*StructObj]
-	residesIn  *Selector[*PackageObj]
+	conditions []Condition[*object.StructObj]
+	residesIn  *Selector[*object.PackageObj]
 }
 
 func Structs() *StructQuery {
@@ -142,7 +144,7 @@ func Structs() *StructQuery {
 
 func (q *StructQuery) clone() *StructQuery {
 	out := &StructQuery{
-		conditions: make([]Condition[*StructObj], len(q.conditions)),
+		conditions: make([]Condition[*object.StructObj], len(q.conditions)),
 		residesIn:  q.residesIn,
 	}
 	copy(out.conditions, q.conditions)
@@ -157,7 +159,7 @@ func (q *StructQuery) ResidesIn(sel *Selector[*PackageObj]) *StructQuery {
 
 func (q *StructQuery) WithName(name string) *StructQuery {
 	nq := q.clone()
-	nq.conditions = append(nq.conditions, func(s *StructObj) bool {
+	nq.conditions = append(nq.conditions, func(s *object.StructObj) bool {
 		return s.Name() == name
 	})
 	return nq
@@ -165,31 +167,31 @@ func (q *StructQuery) WithName(name string) *StructQuery {
 
 func (q *StructQuery) Exported() *StructQuery {
 	nq := q.clone()
-	nq.conditions = append(nq.conditions, func(s *StructObj) bool {
+	nq.conditions = append(nq.conditions, func(s *object.StructObj) bool {
 		return s.IsExported()
 	})
 	return nq
 }
 
-func (q *StructQuery) Matching(cond Condition[*StructObj]) *StructQuery {
+func (q *StructQuery) Matching(cond Condition[*object.StructObj]) *StructQuery {
 	nq := q.clone()
 	nq.conditions = append(nq.conditions, cond)
 	return nq
 }
 
-func (q *StructQuery) Select() *Selector[*StructObj] {
+func (q *StructQuery) Select() *Selector[*object.StructObj] {
 	conds := q.conditions
 	pkgs := q.residesIn
-	return newSelector(func(ctx *Context) []*StructObj {
+	return newSelector(func(ctx *Context) []*object.StructObj {
 		return resolveStructs(ctx, pkgs, conds)
 	})
 }
 
-func (q *StructQuery) MustNotImport(sel *Selector[*PackageObj]) Rule {
+func (q *StructQuery) MustNotImport(sel *Selector[*object.PackageObj]) Rule {
 	return &structImportRule{source: q, forbidden: sel}
 }
 
-func (q *StructQuery) MustNotEmbed(sel *Selector[*StructObj]) Rule {
+func (q *StructQuery) MustNotEmbed(sel *Selector[*object.StructObj]) Rule {
 	return &structEmbedRule{source: q, forbidden: sel}
 }
 
@@ -197,16 +199,16 @@ func (q *StructQuery) MustNotEmbed(sel *Selector[*StructObj]) Rule {
 // Resolve helpers — bridge internal analysis.Store to public object types
 // ---------------------------------------------------------------------------
 
-func packageFromInfo(info analysis.PackageInfo) *PackageObj {
-	return &PackageObj{
+func packageFromInfo(info analysis.PackageInfo) *object.PackageObj {
+	return &object.PackageObj{
 		name:    info.Name,
 		pkgPath: info.PkgPath,
 		imports: info.ImportPaths,
 	}
 }
 
-func funcFromInfo(info analysis.FuncInfo) *FuncObj {
-	return &FuncObj{
+func funcFromInfo(info analysis.FuncInfo) *object.FuncObj {
+	return &object.FuncObj{
 		name:     info.Name,
 		pkgPath:  info.PkgPath,
 		pos:      info.Pos,
@@ -215,8 +217,8 @@ func funcFromInfo(info analysis.FuncInfo) *FuncObj {
 	}
 }
 
-func structFromInfo(info analysis.StructInfo) *StructObj {
-	return &StructObj{
+func structFromInfo(info analysis.StructInfo) *object.StructObj {
+	return &object.StructObj{
 		name:     info.Name,
 		pkgPath:  info.PkgPath,
 		pos:      info.Pos,
@@ -224,8 +226,8 @@ func structFromInfo(info analysis.StructInfo) *StructObj {
 	}
 }
 
-func resolvePackages(ctx *Context, conds []Condition[*PackageObj]) []*PackageObj {
-	var out []*PackageObj
+func resolvePackages(ctx *Context, conds []Condition[*object.PackageObj]) []*object.PackageObj {
+	var out []*object.PackageObj
 	for _, info := range ctx.graph.Store.AllPackages() {
 		obj := packageFromInfo(info)
 		if matchesAll(obj, conds) {
@@ -235,7 +237,7 @@ func resolvePackages(ctx *Context, conds []Condition[*PackageObj]) []*PackageObj
 	return out
 }
 
-func resolveFuncs(ctx *Context, pkgSel *Selector[*PackageObj], conds []Condition[*FuncObj]) []*FuncObj {
+func resolveFuncs(ctx *Context, pkgSel *Selector[*object.PackageObj], conds []Condition[*object.FuncObj]) []*object.FuncObj {
 	var infos []analysis.FuncInfo
 
 	if pkgSel != nil {
@@ -247,7 +249,7 @@ func resolveFuncs(ctx *Context, pkgSel *Selector[*PackageObj], conds []Condition
 		infos = ctx.graph.Store.AllFuncs()
 	}
 
-	var out []*FuncObj
+	var out []*object.FuncObj
 	for _, info := range infos {
 		obj := funcFromInfo(info)
 		if matchesAll(obj, conds) {
@@ -257,7 +259,7 @@ func resolveFuncs(ctx *Context, pkgSel *Selector[*PackageObj], conds []Condition
 	return out
 }
 
-func resolveStructs(ctx *Context, pkgSel *Selector[*PackageObj], conds []Condition[*StructObj]) []*StructObj {
+func resolveStructs(ctx *Context, pkgSel *Selector[*object.PackageObj], conds []Condition[*object.StructObj]) []*object.StructObj {
 	var infos []analysis.StructInfo
 
 	if pkgSel != nil {
@@ -269,7 +271,7 @@ func resolveStructs(ctx *Context, pkgSel *Selector[*PackageObj], conds []Conditi
 		infos = ctx.graph.Store.AllStructs()
 	}
 
-	var out []*StructObj
+	var out []*object.StructObj
 	for _, info := range infos {
 		obj := structFromInfo(info)
 		if matchesAll(obj, conds) {
@@ -294,59 +296,72 @@ func matchesAll[T any](obj T, conds []Condition[T]) bool {
 
 type packageImportRule struct {
 	source    *PackageQuery
-	forbidden *Selector[*PackageObj]
+	forbidden *Selector[*object.PackageObj]
 }
 
-func (r *packageImportRule) Description() string { return "packages must not import forbidden packages" }
-func (r *packageImportRule) Check(ctx *Context) *Result {
+func (r *packageImportRule) Description() string {
+	return "packages must not import forbidden packages"
+}
+func (r *packageImportRule) Check(ctx *analysis.Context) *rule.Result {
 	// TODO: resolve source packages, resolve forbidden set, check imports
-	return &Result{}
+	source := r.source.Select().Resolve(ctx)
+	forbidden := r.forbidden.Resolve(ctx)
+	for _, p := range source {
+		for _, f := range forbidden {
+			for _, importPath := range p.ImportPaths() {
+				if importPath == f.PkgPath() {
+					return &rule.Result{Violations: []rule.Violation{{RuleName: r.Description(), Message: "package imports forbidden package", Pos: p.Pos()}}}
+				}
+			}
+		}
+	}
+	return &rule.Result{}
 }
 
 type packageAllowlistRule struct {
 	source  *PackageQuery
-	allowed *Selector[*PackageObj]
+	allowed *Selector[*object.PackageObj]
 }
 
 func (r *packageAllowlistRule) Description() string {
 	return "packages must only import allowed packages"
 }
-func (r *packageAllowlistRule) Check(ctx *Context) *Result {
+func (r *packageAllowlistRule) Check(ctx *analysis.Context) *rule.Result {
 	// TODO: resolve source packages, resolve allowed set, check imports
-	return &Result{}
+	return &rule.Result{}
 }
 
 type funcCallRule struct {
 	source    *FuncQuery
-	forbidden *Selector[*FuncObj]
+	forbidden *Selector[*object.FuncObj]
 }
 
 func (r *funcCallRule) Description() string { return "functions must not call forbidden functions" }
-func (r *funcCallRule) Check(ctx *Context) *Result {
+func (r *funcCallRule) Check(ctx *analysis.Context) *rule.Result {
 	// TODO: resolve source functions, build call graph, check edges
-	return &Result{}
+	return &rule.Result{}
 }
 
 type structImportRule struct {
 	source    *StructQuery
-	forbidden *Selector[*PackageObj]
+	forbidden *Selector[*object.StructObj]
 }
 
 func (r *structImportRule) Description() string {
 	return "struct fields must not reference types from forbidden packages"
 }
-func (r *structImportRule) Check(ctx *Context) *Result {
+func (r *structImportRule) Check(ctx *analysis.Context) *rule.Result {
 	// TODO: resolve source structs, resolve forbidden packages, check field types
-	return &Result{}
+	return &rule.Result{}
 }
 
 type structEmbedRule struct {
 	source    *StructQuery
-	forbidden *Selector[*StructObj]
+	forbidden *Selector[*object.StructObj]
 }
 
 func (r *structEmbedRule) Description() string { return "structs must not embed forbidden structs" }
-func (r *structEmbedRule) Check(ctx *Context) *Result {
+func (r *structEmbedRule) Check(ctx *analysis.Context) *rule.Result {
 	// TODO: resolve source structs, resolve forbidden set, check embedded types
-	return &Result{}
+	return &rule.Result{}
 }

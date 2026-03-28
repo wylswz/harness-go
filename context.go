@@ -9,7 +9,7 @@ type Context struct {
 }
 
 func newContext(dir string, patterns ...string) (*Context, error) {
-	ac, err := analysis.NewContext(dir, patterns)
+	ac, err := analysis.NewContext(dir, patterns...)
 	if err != nil {
 		return nil, err
 	}
