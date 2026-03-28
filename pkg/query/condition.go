@@ -1,4 +1,4 @@
-package harness
+package query
 
 // Condition is a predicate over an object of type T.
 type Condition[T any] func(T) bool

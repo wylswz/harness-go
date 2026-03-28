@@ -3,7 +3,7 @@ package harness
 import (
 	"testing"
 
-	"github.com/wylswz/harness-go/internal/analysis"
+	"github.com/wylswz/harness-go/pkg/analysis"
 	"github.com/wylswz/harness-go/pkg/rule"
 )
 

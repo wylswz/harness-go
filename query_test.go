@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/wylswz/harness-go/internal/analysis"
+	"github.com/wylswz/harness-go/pkg/analysis"
 	"github.com/wylswz/harness-go/internal/testdata"
 )
 

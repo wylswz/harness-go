@@ -1,4 +1,4 @@
-package harness
+package query
 
 // Selector lazily resolves and caches a filtered set of objects from a Context.
 // Results are cached per Context identity — if the Context changes (e.g., across
